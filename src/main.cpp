@@ -5,7 +5,34 @@
 #include <Adafruit_AHTX0.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
+#include <WiFiMulti.h>
+#include <InfluxDbClient.h>
+#include <InfluxDbCloud.h>
 
+//!------------------------------------------------------------------------------------//
+
+// WiFi AP SSID and password
+#define WIFI_SSID "TemZ"
+#define WIFI_PASSWORD "0960698678"
+
+#define INFLUXDB_URL "https://us-east-1-1.aws.cloud2.influxdata.com"
+#define INFLUXDB_TOKEN "o7cDrNnFm6W8T0HfVeY-ENPH7k5V-DVSQ4w9uueHSn6z5cUI6nK4GCLfyn04ktdVSIVInyvDCmqJ7Mb0-DYzvg=="
+#define INFLUXDB_ORG "561bba456237771c"
+#define INFLUXDB_BUCKET "Home"
+
+// Time zone info
+#define TZ_INFO "UTC7"
+
+// Declare InfluxDB client instance with preconfigured InfluxCloud certificate
+InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN, InfluxDbCloud2CACert);
+
+// Declare Data point
+Point sensor("Sensor_Data");
+
+#define DEVICE "ESP32_S3"
+#define INFLUXDB_SEND_TIME (10000u)
+uint32_t influxdb_timestamp = 5000;
+//!------------------------------------------------------------------------------------//
 #define MH_Tx 4
 #define MH_Rx 5
 
@@ -16,6 +43,7 @@
 
 SoftwareSerial ParticleSerial(PMS_Rx, PMS_Tx); // RX, TX
 SoftwareSerial MH_Z14a(MH_Rx, MH_Tx);
+WiFiMulti wifiMulti;
 
 unsigned int pm1 = 0;
 unsigned int pm2_5 = 0;
@@ -180,15 +208,17 @@ int Read_CO2_DATA()
     return CO2_ppm;
   }
 }
-void Read_BMP_280() {
-  if (bmp.takeForcedMeasurement()) {
+void Read_BMP_280()
+{
+  if (bmp.takeForcedMeasurement())
+  {
     // can now print out the new measurements
     // Serial.print(F("Temperature = "));
     // Serial.print(bmp.readTemperature());
     // Serial.println(" *C");
 
     Serial.print(F("Pressure = "));
-    Serial.print(bmp.readPressure()/100);
+    Serial.print(bmp.readPressure() / 100);
     Serial.println(" hPa");
 
     // Serial.print(F("Approx altitude = "));
@@ -196,49 +226,102 @@ void Read_BMP_280() {
     // Serial.println(" m");
 
     Serial.println();
-  } else {
+  }
+  else
+  {
     Serial.println("Forced measurement failed!");
   }
 }
+void Wifi_Setup(){
+  WiFi.mode(WIFI_STA);
+  wifiMulti.addAP(WIFI_SSID, WIFI_PASSWORD);
+
+  Serial.print("Connecting to wifi");
+  while (wifiMulti.run() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(100);
+  }
+  Serial.println();
+
+}
+void INFLUXDB_TASK_INIT(){
+  sensor.addTag("device",DEVICE);
+  timeSync(TZ_INFO, "pool.ntp.org", "time.nis.gov"); // sync time
+  if (client.validateConnection())
+  {
+    Serial.print("Connected to InfluxDB: ");
+    Serial.println(client.getServerUrl());
+  }
+  else
+  {
+    Serial.print("InfluxDB connection failed: ");
+    Serial.println(client.getLastErrorMessage());
+  }
+ }
+ void INFLUXDB_TASK_MNG(){
+  uint32_t now = millis();
+
+  // if(now - influxdb_timestamp >= 0){
+    influxdb_timestamp = now;
+    sensor.clearFields();
+
+    //REPORT RSSI
+    sensor.addField("RSSI",WiFi.RSSI());
+
+    sensor.addField("HUMIDITY",50);
+    sensor.addField("TEMPERATURE",25); 
+
+    Serial.println(client.pointToLineProtocol(sensor));
+delay(1000);
+  //}
+ }
 void setup()
 {
   Serial.begin(115200); // *Imporant, Pass your Stream reference
   ParticleSerial.begin(BAUDRATE);
   bmp.begin();
   MH_Z14a.begin(BAUDRATE);
-
   pinMode(MH_Rx, INPUT);
   pinMode(MH_Tx, OUTPUT);
 
+  Wifi_Setup();
+  INFLUXDB_TASK_INIT();
+ 
   byte cmd[9] = {0xFF, 0x01, 0x99, 0x00, 0x00, 0x00, 0x13, 0x88, 0x8F}; // Detection range 5000pmm
   // byte cmd[9] = {0xFF, 0x01, 0x99, 0x00, 0x00, 0x00, 0x07, 0xD0, 0x8F}; //Detection range 2000pmm
   // byte cmd[9] = {0xFF, 0x01, 0x99, 0x00, 0x00, 0x00, 0x27, 0x10, 0x2F}; //Detection range 10,000pmm
   MH_Z14a.write(cmd, 9);
 
-  if (aht.begin()) {
+  if (aht.begin())
+  {
     Serial.println("Found AHT20");
-  } else {
+  }
+  else
+  {
     Serial.println("Didn't find AHT20");
   }
   bmp.setSampling(Adafruit_BMP280::MODE_FORCED,     /* Operating Mode. */
-    Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
-    Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-    Adafruit_BMP280::FILTER_X16,      /* Filtering. */
-    Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
 }
+
 
 void loop()
 {
-  sensors_event_t humidity, temp;
-  aht.getEvent(&humidity, &temp);
-  int CO2 = Read_CO2_DATA();
- // Read_BMP_280();
-  Serial.print("CO2 : ");
-  Serial.print(CO2);
-  Serial.println("ppm");
-  //read_pms_data();
-  // Serial.println("aqi = "+String(Thai_AQI(pm2_5,pm10)));
-  // Serial.print("Temperature: ");Serial.print(temp.temperature);Serial.println(" degrees C");
-  // Serial.print("Pressure: ");Serial.print(humidity.relative_humidity);Serial.println(" RH %");
-  delay(200r);
+  INFLUXDB_TASK_MNG();
+  // sensors_event_t humidity, temp;
+  // aht.getEvent(&humidity, &temp);
+  // int CO2 = Read_CO2_DATA();
+  // // Read_BMP_280();
+  // Serial.print("CO2 : ");
+  // Serial.print(CO2);
+  // Serial.println("ppm");
+  // read_pms_data();
+  //  Serial.println("aqi = "+String(Thai_AQI(pm2_5,pm10)));
+  //  Serial.print("Temperature: ");Serial.print(temp.temperature);Serial.println(" degrees C");
+  //  Serial.print("Pressure: ");Serial.print(humidity.relative_humidity);Serial.println(" RH %");
+  //delay(200);
 }
