@@ -232,14 +232,13 @@ void loop()
   sensors_event_t humidity, temp;
   aht.getEvent(&humidity, &temp);
   int CO2 = Read_CO2_DATA();
-  Read_BMP_280();
+ // Read_BMP_280();
   Serial.print("CO2 : ");
   Serial.print(CO2);
   Serial.println("ppm");
-  read_pms_data();
-  Serial.println("aqi = "+String(Thai_AQI(pm2_5,pm10)));
-  Serial.print("Temperature: ");Serial.print(temp.temperature);Serial.println(" degrees C");
-  Serial.print("Pressure: ");Serial.print(humidity.relative_humidity);Serial.println(" RH %");
-  delay(2000);
-
+  //read_pms_data();
+  // Serial.println("aqi = "+String(Thai_AQI(pm2_5,pm10)));
+  // Serial.print("Temperature: ");Serial.print(temp.temperature);Serial.println(" degrees C");
+  // Serial.print("Pressure: ");Serial.print(humidity.relative_humidity);Serial.println(" RH %");
+  delay(200r);
 }
