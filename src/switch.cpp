@@ -84,11 +84,18 @@
 //     digitalWrite(pin[3],b3(i));
 // }
 
+<<<<<<< HEAD
 // void setTime(int h , int m){
 //     hourset = h ;
 //     minuteset = m ;
     
 // }
+=======
+void setTime(int h , int m){
+    hourset = h ;
+    minuteset = m ;
+}
+>>>>>>> d0a8f0d23100b2e1a6783d9d666eb11d95f085fd
 
 // bool sw(){
 //     if(hour == hourset & minute == minuteset){
