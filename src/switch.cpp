@@ -87,7 +87,6 @@ void binaryOut(int i){
 void setTime(int h , int m){
     hourset = h ;
     minuteset = m ;
-    
 }
 
 bool sw(){
