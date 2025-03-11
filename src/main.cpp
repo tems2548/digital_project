@@ -12,6 +12,21 @@
 
 #include <InfluxDbClient.h>
 #include <InfluxDbCloud.h>
+#include <PubSubClient.h>
+
+
+// MQTT broker details
+
+
+const char* mqttServer = "192.168.1.38";
+const int mqttPort = 1883;
+const char* mqttUser = "mqtttest";
+const char* mqttPassword = "Boombox0906";
+
+const char* temperatureTopic = "esp32/sensor/temperature";
+
+WiFiClient espClient;
+PubSubClient CLIENT(espClient);
 
 //!------------------------------------------------------------------------------------//
 
@@ -49,12 +64,16 @@ SCD4x SCD;
 Adafruit_BMP280 bmp;
 
 
-unsigned int pm1 = 0;
+unsigned int pm1_0 = 0;
 unsigned int pm2_5 = 0;
 unsigned int pm10 = 0;
 int temperature;
 int humidity;
+int pressure;
 int CO2;
+
+unsigned long period = 2000; //wait time
+unsigned long last_time = 0;
 
 // diff AQI2.5
 int X1 = -25;
@@ -159,7 +178,7 @@ void read_pms_data()
     }
     else if (index == 5)
     {
-      pm1 = 256 * previousValue + value;
+      pm1_0 = 256 * previousValue + value;
       // Serial.print("{ ");
       // Serial.print("\"pm1\": ");
       // Serial.print(pm1);
@@ -220,7 +239,8 @@ void Read_BMP_280()
     Serial.print(F("Pressure = "));
     Serial.print(bmp.readPressure() / 100);
     Serial.println(" hPa");
-
+    
+    pressure = bmp.readPressure() / 100;
     // Serial.print(F("Approx altitude = "));
     // Serial.print(bmp.readAltitude(1013.25)); /* Adjusted to local forecast! */
     // Serial.println(" m");
@@ -260,7 +280,7 @@ void INFLUXDB_TASK_INIT()
     Serial.println(client.getLastErrorMessage());
   }
 }
-void INFLUXDB_TASK_MNG(int temp, int humid)
+void INFLUXDB_TASK_MNG()
 {
   uint32_t now = millis();
 
@@ -269,11 +289,17 @@ void INFLUXDB_TASK_MNG(int temp, int humid)
   sensor.clearFields();
 
   // REPORT RSSI
-  sensor.addField("RSSI", WiFi.RSSI());
+  sensor.addField("AQI", Thai_AQI(pm2_5,pm10));
+  sensor.addField("HUMIDITY", humidity);
+  sensor.addField("TEMPERATURE", temperature);
+  sensor.addField("PRESSURE", pressure);
+  sensor.addField("CARBONDIOXIDE", CO2);
 
-  sensor.addField("HUMIDITY", humid);
-  sensor.addField("TEMPERATURE", temp);
+  sensor.addField("PARTICLE[10]", pm10);
+  sensor.addField("PARTICLE[2.5]", pm2_5);
+  sensor.addField("PARTICLE[1.0]", pm1_0);
 
+  
   if (!client.writePoint(sensor))
   {
     Serial.print("InfluxDB write failed: ");
@@ -282,6 +308,55 @@ void INFLUXDB_TASK_MNG(int temp, int humid)
 
   Serial.println(client.pointToLineProtocol(sensor));
   //}
+}
+void callback(char* topic, byte* message, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  String messageTemp;
+  for (int i = 0; i < length; i++) {
+    messageTemp += (char)message[i];
+  }
+  Serial.println(messageTemp);
+
+  // if (String(topic) == "arduino/switch/control") {
+  //   if (messageTemp == "ON") {
+  //     digitalWrite(ledPin, HIGH);
+  //     ledState = true;
+  //   } else if (messageTemp == "OFF") {
+  //     digitalWrite(ledPin, LOW);
+  //     ledState = false;
+  //   }
+  //   CLIENT.publish("arduino/switch/status", ledState ? "ON" : "OFF");
+  }
+
+  void reconnect() {
+    while (!CLIENT.connected()) {
+      Serial.print("Attempting MQTT connection...");
+      // Attempt to connect
+      if (CLIENT.connect("ESP32CLIENT", mqttUser, mqttPassword)) { // Include user/pass if needed
+        Serial.println("connected");
+      } else {
+        Serial.print("failed, rc=");
+        Serial.print(CLIENT.state());
+        Serial.println(" try again in 5 seconds");
+        // Wait 5 seconds before retrying
+        delay(5000);
+      }
+    }
+  }
+  
+void setup_MQTT(){
+  // Connect to WiFi
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  // Connect to MQTT broker
+  CLIENT.setServer(mqttServer, mqttPort);
+  reconnect(); 
 }
 void setup()
 {
@@ -294,6 +369,7 @@ void setup()
 
   Wifi_Setup();
   INFLUXDB_TASK_INIT();
+  setup_MQTT();
 
   bmp.setSampling(Adafruit_BMP280::MODE_FORCED,     /* Operating Mode. */
                   Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
@@ -304,15 +380,22 @@ void setup()
 
 void loop()
 {
-  INFLUXDB_TASK_MNG(temperature,humidity);
-  Read_CO2_DATA();
+  if( millis() - last_time > period) {
 
+    last_time = millis(); 
 
-  // Read_BMP_280();
-  // read_pms_data();
+    Read_CO2_DATA();
+    Read_BMP_280();
+    read_pms_data();
+
+    INFLUXDB_TASK_MNG();
+
+    CLIENT.publish(temperatureTopic, String(temperature).c_str());
+}
+  if(!CLIENT.connected()) {
+  reconnect();
+}
+  CLIENT.loop();
   //  Serial.println("aqi = "+String(Thai_AQI(pm2_5,pm10)));
-  //  Serial.print("Temperature: ");Serial.print(temp.temperature);Serial.println(" degrees C");
-  //  Serial.print("Pressure: ");Serial.print(humidity.relative_humidity);Serial.println(" RH %");
-  // delay(200);
-  
+
 }
