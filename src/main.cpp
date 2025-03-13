@@ -31,7 +31,7 @@ PubSubClient CLIENT(espClient);
 //!------------------------------------------------------------------------------------//
 
 // WiFi AP SSID and password
-#define WIFI_SSID "pu_kgs"
+#define WIFI_SSID "TemZ"
 #define WIFI_PASSWORD "0960698678"
 
 #define INFLUXDB_URL "https://us-east-1-1.aws.cloud2.influxdata.com"
@@ -55,6 +55,9 @@ uint32_t influxdb_timestamp = 5000;
 
 #define PMS_Tx 16
 #define PMS_Rx 17
+
+const int BINARY_PIN[] = {39, 40, 41, 42}; // Define the pins
+const int numLeds = sizeof(BINARY_PIN) / sizeof(BINARY_PIN[0]); // Calculate the number of LEDs
 
 #define BAUDRATE 9600
 
@@ -361,6 +364,24 @@ void setup_MQTT(){
 void setup()
 {
   Serial.begin(115200); // *Imporant, Pass your Stream reference
+
+  for (int i = 0; i < numLeds; i++) {
+    pinMode(BINARY_PIN[i], OUTPUT);
+  }
+
+  // //!TEST
+  // for (int i = 0; i < numLeds; i++) {
+  //   digitalWrite(BINARY_PIN[i], HIGH);
+  //   delay()
+  // }
+  // delay(2000); // Wait 1 second
+
+  // // Turn all LEDs off
+  // for (int i = 0; i < numLeds; i++) {
+  //   digitalWrite(BINARY_PIN[i], LOW);
+  //   delay(400);
+  // }
+
   ParticleSerial.begin(BAUDRATE);
 
   Wire.begin();
@@ -369,7 +390,7 @@ void setup()
 
   Wifi_Setup();
   INFLUXDB_TASK_INIT();
-  setup_MQTT();
+  //setup_MQTT();
 
   bmp.setSampling(Adafruit_BMP280::MODE_FORCED,     /* Operating Mode. */
                   Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
@@ -390,12 +411,12 @@ void loop()
 
     INFLUXDB_TASK_MNG();
 
-    CLIENT.publish(temperatureTopic, String(temperature).c_str());
+   // CLIENT.publish(temperatureTopic, String(temperature).c_str());
 }
-  if(!CLIENT.connected()) {
-  reconnect();
-}
-  CLIENT.loop();
-  //  Serial.println("aqi = "+String(Thai_AQI(pm2_5,pm10)));
+//   if(!CLIENT.connected()) {
+//   reconnect();
+// }
+//   CLIENT.loop();
+  
 
 }
