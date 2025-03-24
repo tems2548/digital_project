@@ -4,9 +4,19 @@
 #include <SPI.h>
 #include <Wire.h>
 
+#include <ShiftRegister74HC595.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
 #include "SparkFun_SCD4x_Arduino_Library.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3C //adr
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #include <WiFiMulti.h>
 
@@ -27,6 +37,8 @@ const char* temperatureTopic = "esp32/sensor/temperature";
 
 WiFiClient espClient;
 PubSubClient CLIENT(espClient);
+
+ShiftRegister74HC595<1> sr(41, 39, 40);
 
 //!------------------------------------------------------------------------------------//
 
@@ -368,6 +380,14 @@ void setup()
   for (int i = 0; i < numLeds; i++) {
     pinMode(BINARY_PIN[i], OUTPUT);
   }
+  
+  display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
+
+  display.display();
+  delay(2000); // Pause for 2 seconds
+
+  // Clear the buffer
+  display.clearDisplay();
 
   // //!TEST
   // for (int i = 0; i < numLeds; i++) {
@@ -408,11 +428,18 @@ void loop()
     Read_CO2_DATA();
     Read_BMP_280();
     read_pms_data();
-
+    for (int i = 0; i < 8; i++) {
+    
+      sr.set(i, HIGH); // set single pin HIGH
+      delay(250); 
+    }
     INFLUXDB_TASK_MNG();
-
+    sr.setAllLow();
+    delay(250);
+    sr.updateRegisters();
    // CLIENT.publish(temperatureTopic, String(temperature).c_str());
 }
+
 //   if(!CLIENT.connected()) {
 //   reconnect();
 // }
