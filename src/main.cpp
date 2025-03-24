@@ -43,8 +43,8 @@ ShiftRegister74HC595<1> sr(41, 39, 40);
 //!------------------------------------------------------------------------------------//
 
 // WiFi AP SSID and password
-#define WIFI_SSID "TemZ"
-#define WIFI_PASSWORD "0960698678"
+#define WIFI_SSID "0527S24ultra"
+#define WIFI_PASSWORD "3.1415926535"
 
 #define INFLUXDB_URL "https://us-east-1-1.aws.cloud2.influxdata.com"
 #define INFLUXDB_TOKEN "o7cDrNnFm6W8T0HfVeY-ENPH7k5V-DVSQ4w9uueHSn6z5cUI6nK4GCLfyn04ktdVSIVInyvDCmqJ7Mb0-DYzvg=="
@@ -419,8 +419,159 @@ void setup()
                   Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
 }
 
+void displayONE(){
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  //temp
+  display.setCursor(4,7);
+  display.print("TEMP"); 
+
+  display.setCursor(53,7);
+  display.print(":"); 
+
+  display.setCursor(65,7);
+  display.print(temperature); 
+
+  display.setCursor(86,7);
+  display.print("Celsius");
+
+  //humidity
+  display.setCursor(4,21);
+  display.print("HUMIDITY"); 
+
+  display.setCursor(53,21);
+  display.print(":"); 
+
+  display.setCursor(65,21);
+  display.print(humidity); 
+
+  display.setCursor(86,21);
+  display.print("%");
+
+  //pressure
+  display.setCursor(4,35);
+  display.print("PRESSURE"); 
+
+  display.setCursor(53,35);
+  display.print(":"); 
+
+  display.setCursor(59,35);
+  display.print(pressure); 
+
+  display.setCursor(86,35);
+  display.print("hPa");
+
+  // CO2
+  display.setCursor(4,49);
+  display.print("CO2");
+  
+  display.setCursor(22,49);
+  display.print(":");
+
+  display.setCursor(28,49);
+  display.print(CO2); 
+
+  display.setCursor(54,49);
+  display.print("PPM");
+
+  display.setCursor(74,49);
+  display.print("|");
+
+  //AQI
+  display.setCursor(81,49);
+  display.print("AQI");
+
+  display.setCursor(99,49);
+  display.print(":");
+
+  display.setCursor(105,49);
+  display.print(Thai_AQI(pm2_5,pm10));
+}
+
+void displayTWO(){
+  int voltage = 220 ;
+  int current = 99 ;
+  int power = 9000;
+  int frequency = 50;
+  int energy = 1 ;
+
+  
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  
+  //voltage
+  display.setCursor(4,4);
+  display.print("VOLTAGE"); 
+
+  display.setCursor(58,4);
+  display.print(":"); 
+
+  display.setCursor(80,4);
+  display.print(voltage); 
+
+  display.setCursor(115,4);
+  display.print("V");
+
+  //current
+  display.setCursor(4,16);
+  display.print("CURRENT"); 
+
+  display.setCursor(58,16);
+  display.print(":"); 
+
+  display.setCursor(80,16);
+  display.print(current); 
+
+  display.setCursor(115,16);
+  display.print("A");
+
+  //power
+  display.setCursor(4,28);
+  display.print("POWER"); 
+
+  display.setCursor(58,28);
+  display.print(":"); 
+
+  display.setCursor(80,28);
+  display.print(power); 
+
+  display.setCursor(115,28);
+  display.print("W");
+
+  //frequency
+  display.setCursor(4,40);
+  display.print("FREQUENCY"); 
+
+  display.setCursor(58,40);
+  display.print(":"); 
+
+  display.setCursor(80,40);
+  display.print(frequency); 
+
+  display.setCursor(115,40);
+  display.print("Hz");
+
+  //energy
+  display.setCursor(4,52);
+  display.print("ENERGY"); 
+
+  display.setCursor(58,52);
+  display.print(":"); 
+
+  display.setCursor(80,52);
+  display.print(energy); 
+
+  display.setCursor(115,52);
+  display.print("J");
+}
+
 void loop()
 {
+  displayTWO();
+  
   if( millis() - last_time > period) {
 
     last_time = millis(); 
@@ -428,22 +579,26 @@ void loop()
     Read_CO2_DATA();
     Read_BMP_280();
     read_pms_data();
-    for (int i = 0; i < 8; i++) {
+    // for (int i = 0; i < 8; i++) {
     
-      sr.set(i, HIGH); // set single pin HIGH
-      delay(250); 
-    }
+    //   sr.set(i, HIGH); // set single pin HIGH
+    //   delay(250); 
+    // }
     INFLUXDB_TASK_MNG();
-    sr.setAllLow();
-    delay(250);
-    sr.updateRegisters();
+    // sr.setAllLow();
+    // delay(250);
+    // sr.updateRegisters();
    // CLIENT.publish(temperatureTopic, String(temperature).c_str());
+
+  //  temperature = SCD.getTemperature();
+  // humidity = SCD.getHumidity();
+  // CO2 = SCD.getCO2();
 }
 
 //   if(!CLIENT.connected()) {
 //   reconnect();
 // }
 //   CLIENT.loop();
-  
+display.display();
 
 }
