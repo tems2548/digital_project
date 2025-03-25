@@ -425,68 +425,68 @@ void displayONE(){
   display.setTextColor(SSD1306_WHITE);
 
   //temp
-  display.setCursor(4,7);
+  display.setCursor(4,4);
   display.print("TEMP"); 
 
-  display.setCursor(53,7);
+  display.setCursor(53,4);
   display.print(":"); 
 
-  display.setCursor(65,7);
+  display.setCursor(65,4);
   display.print(temperature); 
 
-  display.setCursor(86,7);
+  display.setCursor(86,4);
   display.print("Celsius");
 
   //humidity
-  display.setCursor(4,21);
+  display.setCursor(4,16);
   display.print("HUMIDITY"); 
 
-  display.setCursor(53,21);
+  display.setCursor(53,16);
   display.print(":"); 
 
-  display.setCursor(65,21);
+  display.setCursor(65,16);
   display.print(humidity); 
 
-  display.setCursor(86,21);
+  display.setCursor(86,16);
   display.print("%");
 
   //pressure
-  display.setCursor(4,35);
+  display.setCursor(4,28);
   display.print("PRESSURE"); 
 
-  display.setCursor(53,35);
+  display.setCursor(53,28);
   display.print(":"); 
 
-  display.setCursor(59,35);
+  display.setCursor(59,28);
   display.print(pressure); 
 
-  display.setCursor(86,35);
+  display.setCursor(86,28);
   display.print("hPa");
 
   // CO2
-  display.setCursor(4,49);
+  display.setCursor(4,40);
   display.print("CO2");
   
-  display.setCursor(22,49);
+  display.setCursor(53,40);
   display.print(":");
 
-  display.setCursor(28,49);
+  display.setCursor(59,40);
   display.print(CO2); 
 
-  display.setCursor(54,49);
+  display.setCursor(86,40);
   display.print("PPM");
 
-  display.setCursor(74,49);
-  display.print("|");
+  // display.setCursor(74,49);
+  // display.print("|");
 
   //AQI
-  display.setCursor(81,49);
+  display.setCursor(4,52);
   display.print("AQI");
 
-  display.setCursor(99,49);
+  display.setCursor(53,52);
   display.print(":");
 
-  display.setCursor(105,49);
+  display.setCursor(59,52);
   display.print(Thai_AQI(pm2_5,pm10));
 }
 
@@ -570,7 +570,8 @@ void displayTWO(){
 
 void loop()
 {
-  displayTWO();
+  displayONE();
+  //displayTWO();
   
   if( millis() - last_time > period) {
 
