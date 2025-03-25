@@ -43,8 +43,8 @@ ShiftRegister74HC595<1> sr(41, 39, 40);
 //!------------------------------------------------------------------------------------//
 
 // WiFi AP SSID and password
-#define WIFI_SSID "0527S24ultra"
-#define WIFI_PASSWORD "3.1415926535"
+#define WIFI_SSID "TemZ"
+#define WIFI_PASSWORD "0960698678"
 
 #define INFLUXDB_URL "https://us-east-1-1.aws.cloud2.influxdata.com"
 #define INFLUXDB_TOKEN "o7cDrNnFm6W8T0HfVeY-ENPH7k5V-DVSQ4w9uueHSn6z5cUI6nK4GCLfyn04ktdVSIVInyvDCmqJ7Mb0-DYzvg=="
@@ -419,7 +419,7 @@ void setup()
                   Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
 }
 
-void displayONE(){
+void display_ENV(){
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
@@ -490,7 +490,7 @@ void displayONE(){
   display.print(Thai_AQI(pm2_5,pm10));
 }
 
-void displayTWO(){
+void display_POWER(){
   int voltage = 220 ;
   int current = 99 ;
   int power = 9000;
@@ -570,8 +570,8 @@ void displayTWO(){
 
 void loop()
 {
-  displayTWO();
-  
+  //display_POWER();
+  display_ENV();
   if( millis() - last_time > period) {
 
     last_time = millis(); 
