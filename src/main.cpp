@@ -425,68 +425,70 @@ void display_ENV(){
   display.setTextColor(SSD1306_WHITE);
 
   //temp
-  display.setCursor(4,7);
+  display.setCursor(4,4);
   display.print("TEMP"); 
 
-  display.setCursor(53,7);
+  display.setCursor(53,4);
   display.print(":"); 
 
-  display.setCursor(65,7);
+  display.setCursor(77,4);
   display.print(temperature); 
 
-  display.setCursor(86,7);
-  display.print("Celsius");
+  display.setCursor(103,0);
+  display.print(char(248));
+  display.setCursor(109,4);
+  display.print("C");
 
   //humidity
-  display.setCursor(4,21);
+  display.setCursor(4,16);
   display.print("HUMIDITY"); 
 
-  display.setCursor(53,21);
+  display.setCursor(53,16);
   display.print(":"); 
 
-  display.setCursor(65,21);
+  display.setCursor(77,16);
   display.print(humidity); 
 
-  display.setCursor(86,21);
+  display.setCursor(109,16);
   display.print("%");
 
   //pressure
-  display.setCursor(4,35);
+  display.setCursor(4,28);
   display.print("PRESSURE"); 
 
-  display.setCursor(53,35);
+  display.setCursor(53,28);
   display.print(":"); 
 
-  display.setCursor(59,35);
+  display.setCursor(77,28);
   display.print(pressure); 
 
-  display.setCursor(86,35);
+  display.setCursor(109,28);
   display.print("hPa");
 
   // CO2
-  display.setCursor(4,49);
+  display.setCursor(4,40);
   display.print("CO2");
   
-  display.setCursor(22,49);
+  display.setCursor(53,40);
   display.print(":");
 
-  display.setCursor(28,49);
+  display.setCursor(77,40);
   display.print(CO2); 
 
-  display.setCursor(54,49);
+  display.setCursor(109,40);
   display.print("PPM");
 
-  display.setCursor(74,49);
-  display.print("|");
+  // display.setCursor(74,49);
+  // display.print("|");
 
   //AQI
-  display.setCursor(81,49);
+  display.setCursor(4,52);
   display.print("AQI");
 
-  display.setCursor(99,49);
+  display.setCursor(53,52);
   display.print(":");
 
-  display.setCursor(105,49);
+  display.setCursor(77,52);
   display.print(Thai_AQI(pm2_5,pm10));
 }
 
@@ -570,8 +572,8 @@ void display_POWER(){
 
 void loop()
 {
-  //display_POWER();
-  display_ENV();
+  displayTWO();
+  
   if( millis() - last_time > period) {
 
     last_time = millis(); 
