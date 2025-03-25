@@ -431,11 +431,13 @@ void displayONE(){
   display.setCursor(53,4);
   display.print(":"); 
 
-  display.setCursor(65,4);
+  display.setCursor(77,4);
   display.print(temperature); 
 
-  display.setCursor(86,4);
-  display.print("Celsius");
+  display.setCursor(103,0);
+  display.print(char(248));
+  display.setCursor(109,4);
+  display.print("C");
 
   //humidity
   display.setCursor(4,16);
@@ -444,10 +446,10 @@ void displayONE(){
   display.setCursor(53,16);
   display.print(":"); 
 
-  display.setCursor(65,16);
+  display.setCursor(77,16);
   display.print(humidity); 
 
-  display.setCursor(86,16);
+  display.setCursor(109,16);
   display.print("%");
 
   //pressure
@@ -457,10 +459,10 @@ void displayONE(){
   display.setCursor(53,28);
   display.print(":"); 
 
-  display.setCursor(59,28);
+  display.setCursor(77,28);
   display.print(pressure); 
 
-  display.setCursor(86,28);
+  display.setCursor(109,28);
   display.print("hPa");
 
   // CO2
@@ -470,10 +472,10 @@ void displayONE(){
   display.setCursor(53,40);
   display.print(":");
 
-  display.setCursor(59,40);
+  display.setCursor(77,40);
   display.print(CO2); 
 
-  display.setCursor(86,40);
+  display.setCursor(109,40);
   display.print("PPM");
 
   // display.setCursor(74,49);
@@ -486,7 +488,7 @@ void displayONE(){
   display.setCursor(53,52);
   display.print(":");
 
-  display.setCursor(59,52);
+  display.setCursor(77,52);
   display.print(Thai_AQI(pm2_5,pm10));
 }
 
