@@ -431,7 +431,7 @@ void display_ENV(){
   display.setCursor(53,4);
   display.print(":"); 
 
-  display.setCursor(77,4);
+  display.setCursor(97,4);
   display.print(temperature); 
 
   display.setCursor(103,0);
@@ -446,7 +446,7 @@ void display_ENV(){
   display.setCursor(53,16);
   display.print(":"); 
 
-  display.setCursor(77,16);
+  display.setCursor(97,16);
   display.print(humidity); 
 
   display.setCursor(109,16);
@@ -459,7 +459,7 @@ void display_ENV(){
   display.setCursor(53,28);
   display.print(":"); 
 
-  display.setCursor(77,28);
+  display.setCursor(97,28);
   display.print(pressure); 
 
   display.setCursor(109,28);
@@ -472,7 +472,7 @@ void display_ENV(){
   display.setCursor(53,40);
   display.print(":");
 
-  display.setCursor(77,40);
+  display.setCursor(97,40);
   display.print(CO2); 
 
   display.setCursor(109,40);
@@ -488,17 +488,16 @@ void display_ENV(){
   display.setCursor(53,52);
   display.print(":");
 
-  display.setCursor(77,52);
+  display.setCursor(97,52);
   display.print(Thai_AQI(pm2_5,pm10));
 }
 
 void display_POWER(){
   int voltage = 220 ;
   int current = 99 ;
-  int power = 9000;
-  int frequency = 50;
+  int power = 9000 ;
   int energy = 1 ;
-
+  int powerfactor = 50;
   
   display.clearDisplay();
   display.setTextSize(1);
@@ -511,10 +510,10 @@ void display_POWER(){
   display.setCursor(58,4);
   display.print(":"); 
 
-  display.setCursor(80,4);
+  display.setCursor(97,4);
   display.print(voltage); 
 
-  display.setCursor(115,4);
+  display.setCursor(109,4);
   display.print("V");
 
   //current
@@ -524,10 +523,10 @@ void display_POWER(){
   display.setCursor(58,16);
   display.print(":"); 
 
-  display.setCursor(80,16);
+  display.setCursor(97,16);
   display.print(current); 
 
-  display.setCursor(115,16);
+  display.setCursor(109,16);
   display.print("A");
 
   //power
@@ -537,24 +536,11 @@ void display_POWER(){
   display.setCursor(58,28);
   display.print(":"); 
 
-  display.setCursor(80,28);
+  display.setCursor(97,28);
   display.print(power); 
 
-  display.setCursor(115,28);
+  display.setCursor(109,28);
   display.print("W");
-
-  //frequency
-  display.setCursor(4,40);
-  display.print("FREQUENCY"); 
-
-  display.setCursor(58,40);
-  display.print(":"); 
-
-  display.setCursor(80,40);
-  display.print(frequency); 
-
-  display.setCursor(115,40);
-  display.print("Hz");
 
   //energy
   display.setCursor(4,52);
@@ -563,11 +549,22 @@ void display_POWER(){
   display.setCursor(58,52);
   display.print(":"); 
 
-  display.setCursor(80,52);
+  display.setCursor(97,52);
   display.print(energy); 
 
-  display.setCursor(115,52);
-  display.print("J");
+  display.setCursor(109,52);
+  display.print("kWh");
+
+  //powerfactor
+  display.setCursor(4,40);
+  display.print("POWERFACTOR"); 
+
+  display.setCursor(58,40);
+  display.print(":"); 
+
+  display.setCursor(97,40);
+  display.print(powerfactor); 
+
 }
 
 void loop()
