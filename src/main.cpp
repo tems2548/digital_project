@@ -572,7 +572,7 @@ void display_POWER(){
 
 void loop()
 {
-  displayTWO();
+  display_ENV();
   
   if( millis() - last_time > period) {
 
