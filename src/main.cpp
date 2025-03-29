@@ -510,6 +510,7 @@ void display_POWER(){
   }
 
   
+  
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
@@ -623,6 +624,68 @@ void setup()
                   Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
                   Adafruit_BMP280::FILTER_X16,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+}
+
+float QElectric_Raw(float unit){
+  float c ;
+  float bill ;
+  if (unit < 15){
+    bill = unit * 2.3488 ;
+  }
+
+  if (unit >= 15 ){
+    c = 15 * 2.3488 ;
+  }
+  if (unit > 25){
+    c = c + 10 * 2.9882 ;
+  }
+  else{
+    bill = (unit - 15)*2.9882 + c ; 
+    return bill ;
+  }
+
+  if (unit > 35){
+    c = c + 10 * 3.2405 ;
+  }
+  else{
+    bill = (unit - 25)*3.2405 + c ; 
+    return bill ;
+  }
+
+  if (unit > 100){
+    c = c + 65 * 3.6237 ;
+  }
+  else{
+    bill = (unit - 35)*3.6237 + c ; 
+    return bill ;
+  }
+
+  if (unit > 150){
+    c = c + 50 * 3.7171 ;
+  }
+  else{
+    bill = (unit - 100)*3.7171 + c ; 
+    return bill ;
+  }
+
+  if(unit > 400){
+    c = c + 250 * 4.2218 ;
+    bill = (unit - 400)*4.4217 + c ;
+    return bill ;
+  }
+  else{
+    bill = (unit - 150)*4.2218 + c ; 
+    return bill ;
+  }
+}
+
+float QElectric_Net(float unit){
+  float net ;
+  float service = 8.19 ;
+  float Ft = 0.3672 ;
+
+  net = (QElectric_Raw(unit) + service + (unit*Ft))*1.07;
+  return net ;
 }
 
 void loop()
