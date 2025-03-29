@@ -104,7 +104,7 @@ float energy;
 float frequency;
 float pf;
 
-unsigned long period = 2000; //wait time
+unsigned long period = 15000; //wait time
 unsigned long last_time = 0;
 
 
@@ -187,11 +187,7 @@ int Thai_AQI(int PM2_5, int PM10)
   {
     final_AQI = AQI_2_5_val;
   }
-  if(!ParticleSerial.available()){
-    return final_AQI = 0;
-  }else{
-    return final_AQI;
-  }
+  return final_AQI;
 }
 
 void read_pms_data()
@@ -206,7 +202,6 @@ void read_pms_data()
     if ((index == 0 && value != 0x42) || (index == 1 && value != 0x4d))
     {
       Serial.println("Cannot find the data header.");
-      Thai_AQI(1,1);
       break;
     }
 
@@ -415,7 +410,7 @@ void display_ENV(){
   display.setCursor(53,4);
   display.print(":"); 
 
-  display.setCursor(97,4);
+  display.setCursor(73,4);
   display.print(temperature); 
 
   display.setCursor(103,0);
@@ -430,7 +425,7 @@ void display_ENV(){
   display.setCursor(53,16);
   display.print(":"); 
 
-  display.setCursor(97,16);
+  display.setCursor(73,16);
   display.print(humidity); 
 
   display.setCursor(109,16);
@@ -443,7 +438,7 @@ void display_ENV(){
   display.setCursor(53,28);
   display.print(":"); 
 
-  display.setCursor(97,28);
+  display.setCursor(73,28);
   display.print(pressure); 
 
   display.setCursor(109,28);
@@ -456,7 +451,7 @@ void display_ENV(){
   display.setCursor(53,40);
   display.print(":");
 
-  display.setCursor(97,40);
+  display.setCursor(73,40);
   display.print(CO2); 
 
   display.setCursor(109,40);
@@ -472,22 +467,22 @@ void display_ENV(){
   display.setCursor(53,52);
   display.print(":");
 
-  display.setCursor(97,52);
+  display.setCursor(73,52);
   display.print(Thai_AQI(pm2_5,pm10));
 }
 
 void display_POWER(){
 
-  Serial.print("Custom Address:");
-  Serial.println(pzem.readAddress(), HEX);
+  // Serial.print("Custom Address:");
+  // Serial.println(pzem.readAddress(), HEX);
 
   // Read the data from the sensor
-  float voltage = pzem.voltage();
-  float current = pzem.current();
-  float power = pzem.power();
-  float energy = pzem.energy();
-  float frequency = pzem.frequency();
-  float pf = pzem.pf();
+  voltage = pzem.voltage();
+  current = pzem.current();
+  power = pzem.power();
+  energy = pzem.energy();
+  frequency = pzem.frequency();
+  pf = pzem.pf();
 
   // Check if the data is valid
   if(isnan(voltage)){
@@ -526,10 +521,10 @@ void display_POWER(){
   display.setCursor(58,4);
   display.print(":"); 
 
-  display.setCursor(97,4);
+  display.setCursor(73,4);
   display.print(voltage); 
 
-  display.setCursor(109,4);
+  display.setCursor(115,4);
   display.print("V");
 
   //current
@@ -539,10 +534,10 @@ void display_POWER(){
   display.setCursor(58,16);
   display.print(":"); 
 
-  display.setCursor(97,16);
+  display.setCursor(73,16);
   display.print(current); 
 
-  display.setCursor(109,16);
+  display.setCursor(115,16);
   display.print("A");
 
   //power
@@ -552,20 +547,20 @@ void display_POWER(){
   display.setCursor(58,28);
   display.print(":"); 
 
-  display.setCursor(97,28);
+  display.setCursor(73,28);
   display.print(power); 
 
-  display.setCursor(109,28);
+  display.setCursor(115,28);
   display.print("W");
 
   //energy
   display.setCursor(4,52);
   display.print("ENERGY"); 
-
+ 
   display.setCursor(58,52);
   display.print(":"); 
 
-  display.setCursor(97,52);
+  display.setCursor(73,52);
   display.print(energy); 
 
   display.setCursor(109,52);
@@ -573,12 +568,12 @@ void display_POWER(){
 
   //powerfactor
   display.setCursor(4,40);
-  display.print("POWERFACTOR"); 
+  display.print("P.FACTOR"); 
 
   display.setCursor(58,40);
   display.print(":"); 
 
-  display.setCursor(97,40);
+  display.setCursor(73,40);
   display.print(pf); 
 
 }
@@ -632,7 +627,8 @@ void setup()
 
 void loop()
 {
-  display_ENV();
+  //display_ENV();
+  display_POWER();
   
   if( millis() - last_time > period) {
 
