@@ -10,6 +10,7 @@
 #include "SparkFun_SCD4x_Arduino_Library.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <PZEM004Tv30.h>
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -43,8 +44,8 @@ ShiftRegister74HC595<1> sr(41, 39, 40);
 //!------------------------------------------------------------------------------------//
 
 // WiFi AP SSID and password
-#define WIFI_SSID "TemZ"
-#define WIFI_PASSWORD "0960698678"
+#define WIFI_SSID "Tesla_network"
+#define WIFI_PASSWORD "Boombox0906"
 
 #define INFLUXDB_URL "https://us-east-1-1.aws.cloud2.influxdata.com"
 #define INFLUXDB_TOKEN "o7cDrNnFm6W8T0HfVeY-ENPH7k5V-DVSQ4w9uueHSn6z5cUI6nK4GCLfyn04ktdVSIVInyvDCmqJ7Mb0-DYzvg=="
@@ -68,8 +69,14 @@ uint32_t influxdb_timestamp = 5000;
 #define PMS_Tx 16
 #define PMS_Rx 17
 
-const int BINARY_PIN[] = {39, 40, 41, 42}; // Define the pins
-const int numLeds = sizeof(BINARY_PIN) / sizeof(BINARY_PIN[0]); // Calculate the number of LEDs
+#define PZEM_RX_PIN 35
+#define PZEM_TX_PIN 36
+
+#define PZEM_SERIAL Serial2
+PZEM004Tv30 pzem(PZEM_SERIAL, PZEM_RX_PIN, PZEM_TX_PIN);
+
+// const int BINARY_PIN[] = {39, 40, 41, 42}; // Define the pins
+// const int numLeds = sizeof(BINARY_PIN) / sizeof(BINARY_PIN[0]); // Calculate the number of LEDs
 
 #define BAUDRATE 9600
 
@@ -82,13 +89,24 @@ Adafruit_BMP280 bmp;
 unsigned int pm1_0 = 0;
 unsigned int pm2_5 = 0;
 unsigned int pm10 = 0;
+
+// SCD 41
 int temperature;
 int humidity;
 int pressure;
 int CO2;
 
+// Power PZEM
+float voltage;
+float current;
+float power;
+float energy;
+float frequency;
+float pf;
+
 unsigned long period = 2000; //wait time
 unsigned long last_time = 0;
+
 
 // diff AQI2.5
 int X1 = -25;
@@ -169,7 +187,11 @@ int Thai_AQI(int PM2_5, int PM10)
   {
     final_AQI = AQI_2_5_val;
   }
-  return final_AQI;
+  if(!ParticleSerial.available()){
+    return final_AQI = 0;
+  }else{
+    return final_AQI;
+  }
 }
 
 void read_pms_data()
@@ -184,6 +206,7 @@ void read_pms_data()
     if ((index == 0 && value != 0x42) || (index == 1 && value != 0x4d))
     {
       Serial.println("Cannot find the data header.");
+      Thai_AQI(1,1);
       break;
     }
 
@@ -314,6 +337,13 @@ void INFLUXDB_TASK_MNG()
   sensor.addField("PARTICLE[2.5]", pm2_5);
   sensor.addField("PARTICLE[1.0]", pm1_0);
 
+  sensor.addField("VOLTAGE", voltage);
+  sensor.addField("CURRENT", current);
+  sensor.addField("POWER", power);
+  sensor.addField("ENEGY", energy);
+  sensor.addField("FREQUENCY", frequency);
+  sensor.addField("POWERFACTOR", pf);
+
   
   if (!client.writePoint(sensor))
   {
@@ -373,52 +403,6 @@ void setup_MQTT(){
   CLIENT.setServer(mqttServer, mqttPort);
   reconnect(); 
 }
-void setup()
-{
-  Serial.begin(115200); // *Imporant, Pass your Stream reference
-
-  for (int i = 0; i < numLeds; i++) {
-    pinMode(BINARY_PIN[i], OUTPUT);
-  }
-  
-  display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
-
-  display.display();
-  delay(2000); // Pause for 2 seconds
-
-  // Clear the buffer
-  display.clearDisplay();
-
-  // //!TEST
-  // for (int i = 0; i < numLeds; i++) {
-  //   digitalWrite(BINARY_PIN[i], HIGH);
-  //   delay()
-  // }
-  // delay(2000); // Wait 1 second
-
-  // // Turn all LEDs off
-  // for (int i = 0; i < numLeds; i++) {
-  //   digitalWrite(BINARY_PIN[i], LOW);
-  //   delay(400);
-  // }
-
-  ParticleSerial.begin(BAUDRATE);
-
-  Wire.begin();
-  bmp.begin();
-  SCD.begin();
-
-  Wifi_Setup();
-  INFLUXDB_TASK_INIT();
-  //setup_MQTT();
-
-  bmp.setSampling(Adafruit_BMP280::MODE_FORCED,     /* Operating Mode. */
-                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
-                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
-                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
-}
-
 void display_ENV(){
   display.clearDisplay();
   display.setTextSize(1);
@@ -493,11 +477,43 @@ void display_ENV(){
 }
 
 void display_POWER(){
-  int voltage = 220 ;
-  int current = 99 ;
-  int power = 9000 ;
-  int energy = 1 ;
-  int powerfactor = 50;
+
+  Serial.print("Custom Address:");
+  Serial.println(pzem.readAddress(), HEX);
+
+  // Read the data from the sensor
+  float voltage = pzem.voltage();
+  float current = pzem.current();
+  float power = pzem.power();
+  float energy = pzem.energy();
+  float frequency = pzem.frequency();
+  float pf = pzem.pf();
+
+  // Check if the data is valid
+  if(isnan(voltage)){
+      Serial.println("Error reading voltage");
+  } else if (isnan(current)) {
+      Serial.println("Error reading current");
+  } else if (isnan(power)) {
+      Serial.println("Error reading power");
+  } else if (isnan(energy)) {
+      Serial.println("Error reading energy");
+  } else if (isnan(frequency)) {
+      Serial.println("Error reading frequency");
+  } else if (isnan(pf)) {
+      Serial.println("Error reading power factor");
+  } else {
+
+      // Print the values to the Serial console
+      // Serial.print("Voltage: ");      Serial.print(voltage);      Serial.println("V");
+      // Serial.print("Current: ");      Serial.print(current);      Serial.println("A");
+      // Serial.print("Power: ");        Serial.print(power);        Serial.println("W");
+      // Serial.print("Energy: ");       Serial.print(energy,3);     Serial.println("kWh");
+      // Serial.print("Frequency: ");    Serial.print(frequency, 1); Serial.println("Hz");
+      // Serial.print("PF: ");           Serial.println(pf);
+
+  }
+
   
   display.clearDisplay();
   display.setTextSize(1);
@@ -563,8 +579,55 @@ void display_POWER(){
   display.print(":"); 
 
   display.setCursor(97,40);
-  display.print(powerfactor); 
+  display.print(pf); 
 
+}
+void setup()
+{
+  Serial.begin(115200); // *Impotant, Pass your Stream reference
+  
+  //pzem.resetEnergy();
+
+  // for (int i = 0; i < numLeds; i++) {
+  //   pinMode(BINARY_PIN[i], OUTPUT);
+  // }
+  
+  display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
+
+  display.display();
+  delay(2000); // Pause for 2 seconds
+
+  // Clear the buffer
+  display.clearDisplay();
+
+  // //!TEST
+  // for (int i = 0; i < numLeds; i++) {
+  //   digitalWrite(BINARY_PIN[i], HIGH);
+  //   delay()
+  // }
+  // delay(2000); // Wait 1 second
+
+  // // Turn all LEDs off
+  // for (int i = 0; i < numLeds; i++) {
+  //   digitalWrite(BINARY_PIN[i], LOW);
+  //   delay(400);
+  // }
+
+  ParticleSerial.begin(BAUDRATE);
+
+  Wire.begin();
+  bmp.begin();
+  SCD.begin();
+
+  Wifi_Setup();
+  INFLUXDB_TASK_INIT();
+  //setup_MQTT();
+
+  bmp.setSampling(Adafruit_BMP280::MODE_FORCED,     /* Operating Mode. */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
 }
 
 void loop()
@@ -578,18 +641,22 @@ void loop()
     Read_CO2_DATA();
     Read_BMP_280();
     read_pms_data();
+
     // for (int i = 0; i < 8; i++) {
     
     //   sr.set(i, HIGH); // set single pin HIGH
     //   delay(250); 
     // }
+
     INFLUXDB_TASK_MNG();
+
     // sr.setAllLow();
     // delay(250);
     // sr.updateRegisters();
+
    // CLIENT.publish(temperatureTopic, String(temperature).c_str());
 
-  //  temperature = SCD.getTemperature();
+  // temperature = SCD.getTemperature();
   // humidity = SCD.getHumidity();
   // CO2 = SCD.getCO2();
 }
@@ -598,6 +665,7 @@ void loop()
 //   reconnect();
 // }
 //   CLIENT.loop();
+
 display.display();
 
 }
